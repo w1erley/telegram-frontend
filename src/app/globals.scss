@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+//:root {
+//  --background: #ffffff;
+//  --foreground: #171717;
+//}
+//
+//@media (prefers-color-scheme: dark) {
+//  :root {
+//    --background: #0a0a0a;
+//    --foreground: #ededed;
+//  }
+//}
+//
+//body {
+//  color: var(--foreground);
+//  background: var(--background);
+//  font-family: Arial, Helvetica, sans-serif;
+//}
+
+@layer base {
+  :root {
+    --light: #ffffff;
+    --background: #f9f9fb; /* Soft off-white background */
+    --foreground: #1e1e1e; /* Dark text */
+    --card: #ffffff; /* Pure white card/chat bubble */
+    --card-foreground: #1e1e1e;
+    --popover: #ffffff;
+    --popover-foreground: #1e1e1e;
+    --primary: #0088cc; /* Telegram-like soft violet */
+    --primary-foreground: #ffffff;
+    --secondary: #f1f1f4; /* Subtle gray */
+    --secondary-foreground: #1e1e1e;
+    --muted: #e6e6ea;
+    --muted-foreground: #5c5c5c;
+    --accent: #ca5e75; /* Balanced pink-red accent */
+    --accent-foreground: #ffffff;
+    --destructive: #e53935;
+    --destructive-foreground: #ffffff;
+    --border: #e1e1e6;
+    --input: #ffffff;
+    --ring: #0088cc;
+    --radius: 0.5rem;
+
+    /* Chart Colors */
+    --chart-1: #ec407a; /* Pink */
+    --chart-2: #42a5f5; /* Blue */
+    --chart-3: #66bb6a; /* Green */
+    --chart-4: #ffca28; /* Yellow */
+    --chart-5: #ab47bc; /* Purple */
+  }
+
+  .dark {
+    --light: #ffffff;
+    --background: #121212;
+    --foreground: #e0e0e0;
+    --card: #1f1f1f;
+    --card-foreground: #e0e0e0;
+    --popover: #1f1f1f;
+    --popover-foreground: #e0e0e0;
+    --primary: #8774e1;
+    --primary-foreground: #ffffff;
+    --secondary: #707579;
+    --secondary-foreground: #ffffff;
+    --muted: #333333;
+    --muted-foreground: #999999;
+    --accent: #b15a6b;
+    --accent-foreground: #ffffff;
+    --destructive: #cf6679;
+    --destructive-foreground: #ffffff;
+    --border: #2b2b2b;
+    --input: #2b2b2b;
+    --ring: #8774e1;
+
+    /* Chart Colors */
+    --chart-1: #f48fb1;
+    --chart-2: #4db6ac;
+    --chart-3: #ce93d8;
+    --chart-4: #ffcc80;
+    --chart-5: #90caf9;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
