@@ -6,35 +6,68 @@ import { Chat } from "@/components/features/Chat/Chat";
 import {useScreenWidth} from "@/hooks/useScreenWidth";
 import {useApi} from "@/hooks/useApi";
 import {ChatSummary} from "@/types/chat";
+import {toastError} from "@/lib/utils";
 
 const MainPage: React.FC = () => {
   const { get } = useApi()
 
   const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [activeChat, setActiveChat] = useState<ChatSummary | null>(null);
 
-  const [activeChat, setActiveChat] = useState<any | null>(null);
+  const [key, setKey] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.location.hash.slice(1) || null;
+  });
 
+  /* ───────── initial load ───────── */
   useEffect(() => {
-    get<ChatSummary[]>("/chats").then(setChats);
-  }, []);
+    get<ChatSummary[]>("/chats")
+      .then(setChats)
+      .catch(toastError);
+  }, []); // тільки на mount
 
-  const getChatFromHash = () => {
-    if (typeof window !== "undefined" && window.location.hash.startsWith("#@")) {
-      const alias = window.location.hash.slice(1); // Remove the `#`
-      return chats.find(chat => chat.alias === alias) || null
-    }
-    return null;
+  /* ───────── helper ───────── */
+  const getHashKey = () => {
+    if (typeof window === "undefined") return null;
+    const h = window.location.hash;
+    return h ? h.slice(1) : null;
   };
 
+  /* ───────── resolve hash → activeChat ───────── */
   useEffect(() => {
-    setActiveChat(getChatFromHash());
+    const key = getHashKey();
+    console.log('key', key);
+    if (!key) {
+      setActiveChat(null);
+      return;
+    }
 
-    const handleHashChange = () => {
-      setActiveChat(getChatFromHash());
+    // 1) already in list?
+    const found = chats.find(c => c.alias === key || String(c.id) === key);
+    if (found) {
+      setActiveChat(found);
+      return;
+    }
+
+    // 2) fetch the single chat
+    get<ChatSummary>(`/chats/${encodeURIComponent(key)}`)
+      .then(chat => {
+        setActiveChat(chat);
+      })
+      .catch(e => {
+        toastError(e);
+        setActiveChat(null);
+      });
+  }, [key, chats]);               // ⬅️ без get — посилання стабільне
+
+  /* ───────── listen hashchange ───────── */
+  useEffect(() => {
+    const handle = () => {
+      const hash = window.location.hash;
+      setKey(hash ? hash.slice(1) : null);
     };
-
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("hashchange", handle);
+    return () => window.removeEventListener("hashchange", handle);
   }, []);
 
   const handleChatSelect = (alias: string) => {
@@ -60,14 +93,14 @@ const MainPage: React.FC = () => {
   };
 
 
-  useEffect(() => {
-    const getUser = async () => {
-      const response = await get('/user');
-      console.log('response', response);
-    }
-
-    getUser()
-  }, []);
+  // useEffect(() => {
+  //   const getUser = async () => {
+  //     const response = await get('/user');
+  //     console.log('response', response);
+  //   }
+  //
+  //   getUser()
+  // }, []);
 
   return (
     <div className="flex h-screen w-full">
@@ -85,7 +118,11 @@ const MainPage: React.FC = () => {
         {activeChat ? (
           <Chat activeChat={activeChat} toggleSidebar={toggleSidebar}/>
         ) : (
-          "No chat selected"
+          <div
+            className={"flex items-center justify-center h-full w-full text-muted-foreground"}
+          >
+            No chat selected
+          </div>
         )}
       </div>
 

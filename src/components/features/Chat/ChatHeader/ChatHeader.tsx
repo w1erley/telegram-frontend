@@ -29,12 +29,12 @@ export function ChatHeader({ activeChat, toggleSidebar }: ChatHeaderProps) {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search" />
         </div>
-        <Button variant="ghost" size="icon">
-          <Phone className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Video className="h-5 w-5" />
-        </Button>
+        {/*<Button variant="ghost" size="icon">*/}
+        {/*  <Phone className="h-5 w-5" />*/}
+        {/*</Button>*/}
+        {/*<Button variant="ghost" size="icon">*/}
+        {/*  <Video className="h-5 w-5" />*/}
+        {/*</Button>*/}
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="h-5 w-5" />
         </Button>

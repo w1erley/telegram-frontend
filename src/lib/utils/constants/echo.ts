@@ -1,4 +1,5 @@
-const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+const reverbKey = process.env.NEXT_PUBLIC_REVERB_KEY;
 const wsHost = process.env.NEXT_PUBLIC_WS_HOST;
+const reverbScheme = process.env.NEXT_PUBLIC_REVERB_SCHEME;
 
-export { pusherKey, wsHost };
+export { reverbKey, wsHost, reverbScheme };

@@ -14,10 +14,10 @@ export function Chat({ activeChat, toggleSidebar }: ChatProps) {
   console.log("activeChat", activeChat);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col overflow-y-auto">
       <ChatHeader activeChat={activeChat} toggleSidebar={toggleSidebar}/>
       <ChatContent activeChat={activeChat}/>
-      <ChatFooter />
+      <ChatFooter chatId={activeChat?.id}/>
     </div>
   )
 }

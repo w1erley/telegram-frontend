@@ -26,10 +26,10 @@ export function useApi() {
     };
 
     return {
-        get:  <T = unknown>(url: string, opts?: ApiRequestOptions) => call<T>("get", url, opts),
-        post: <T = unknown, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("post", url, opts),
-        put:  <T = unknown, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("put",  url, opts),
-        patch:<T = unknown, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("patch",url, opts),
-        del:  <T = unknown>(url: string, opts?: ApiRequestOptions) => call<T>("delete", url, opts),
+        get:  <T = any>(url: string, opts?: ApiRequestOptions) => call<T>("get", url, opts),
+        post: <T = any, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("post", url, opts),
+        put:  <T = any, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("put",  url, opts),
+        patch:<T = any, B = any>(url: string, opts?: ApiRequestOptions<B>) => call<T, B>("patch",url, opts),
+        del:  <T = any>(url: string, opts?: ApiRequestOptions) => call<T>("delete", url, opts),
     };
 }

@@ -7,23 +7,39 @@ import {MessageDto} from "@/types/chat";
 
 export function ChatFooter({ chatId }: { chatId: number }) {
   const { post } = useApi();
-  const [body, setBody] = useState(""); //body message, not request
+  const [body, setBody] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
-  const send = () => {
+  const send = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!body.trim()) return;
-    post<MessageDto>("/messages", { body: { chat_id: chatId, body } }).then(() => setBody(""));
+
+    setSendingMessage(true);
+    post<MessageDto>(`/chats/${chatId}/messages`, { body: { body } })
+      .then(() => setBody(""))
+      .finally(() => {
+        setSendingMessage(false)
+      });
   };
 
   return (
-    <div className="h-16 border-t flex items-center px-4 gap-2">
+    <form
+      onSubmit={send}
+      className="h-16 border-t flex items-center px-4 gap-2"
+    >
       <Button variant="ghost" size="icon">
         <MoreHorizontal className="h-5 w-5" />
       </Button>
-      <Input className="flex-1" placeholder="Message" />
-      <Button onClick={send}>
+      <Input
+        className="flex-1"
+        placeholder="Message"
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+      />
+      <Button disabled={!chatId || !body.trim() || sendingMessage} onClick={send}>
         <MessageCircle className="mr-2 h-4 w-4" />
         Send
       </Button>
-    </div>
+    </form>
   )
 }

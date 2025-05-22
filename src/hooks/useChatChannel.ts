@@ -14,9 +14,9 @@ export const useChatChannel = (
     if (!chatId) return;
     const channel = echo.private(`private-chat.${chatId}`);
 
-    channel.listen("message.sent",   ({ id, ...rest }: MessageDto) => handlers.onMessage({ id, ...rest }));
-    channel.listen("message.deleted", ({ id }: { id: number })     => handlers.onDelete(id));
-    channel.listen("message.edited", (msg: MessageDto)            => handlers.onEdit(msg));
+    channel.listen(".message.sent",   ({ id, ...rest }: MessageDto) => handlers.onMessage({ id, ...rest }));
+    channel.listen(".message.deleted", ({ id }: { id: number })     => handlers.onDelete(id));
+    channel.listen(".message.edited", (msg: MessageDto)            => handlers.onEdit(msg));
 
     return () => { echo.leave(`private-chat.${chatId}`); };
   }, [chatId]);

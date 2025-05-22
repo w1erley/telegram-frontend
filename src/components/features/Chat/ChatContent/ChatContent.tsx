@@ -17,13 +17,18 @@ export function ChatContent({ activeChat }: ChatContentProps) {
     return <div className="flex-1 flex items-center justify-center">Select a chat</div>;
   }
 
+  console.log("messages", messages);
+
   useEffect(() => {
     if (!activeChat) return;
     get<MessageDto[]>(`/chats/${activeChat.id}/messages`).then(setMessages);
   }, [activeChat?.id]);
 
   useChatChannel(activeChat?.id, {
-    onMessage:  m  => setMessages(prev => [...prev, m]),
+    onMessage: m => setMessages(prev => {
+      if (prev.some(msg => msg.id === m.id)) return prev;
+      return [...prev, m];
+    }),
     onDelete:   id => setMessages(prev => prev.filter(m => m.id !== id)),
     onEdit:     m  => setMessages(prev => prev.map(x => x.id === m.id ? m : x)),
   });

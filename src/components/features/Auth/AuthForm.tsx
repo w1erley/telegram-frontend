@@ -13,11 +13,12 @@ import {toastError} from "@/lib/utils"
 import Cookies from "js-cookie";
 
 const loginSchema = yup.object({
-  name: yup.string().required("Name is required"),
+  username: yup.string().required("Username is required"),
   password: yup.string().required("Password is required"),
 })
 
 const registerSchema = yup.object({
+  username: yup.string().required("Username is required"),
   name: yup.string().required("Name is required"),
   email: yup.string().email("Must be a valid email").required("Email is required"),
   password: yup.string().min(8, "Password must be at least 8 characters").required("Password is required"),
@@ -102,12 +103,12 @@ function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="p-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="login-name">Name</label>
+          <label htmlFor="login-username">Username</label>
           <Input
-            id="login-name"
-            {...register("name")}
+            id="login-username"
+            {...register("username")}
           />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+          {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -150,6 +151,15 @@ function RegisterForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="p-6">
       <div className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="register-username">Username</label>
+          <Input
+            id="register-username"
+            {...register("username")}
+          />
+          {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
+        </div>
+
         <div className="space-y-2">
           <label htmlFor="register-name">Name</label>
           <Input
