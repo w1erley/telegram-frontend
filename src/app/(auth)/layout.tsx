@@ -1,6 +1,7 @@
 import { getCookies } from "next-client-cookies/server";
 import { redirect } from "next/navigation";
 import AuthLayout from "@/components/layout/AuthLayout/AuthLayout";
+import {AuthProvider} from "@/contexts/AuthContext";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ export default async function AuthParentLayout({ children }: LayoutProps) {
 
   return (
     <AuthLayout>
-      {children}
+        {children}
     </AuthLayout>
   );
 }

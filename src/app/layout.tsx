@@ -5,10 +5,9 @@ import { CookiesProvider } from "next-client-cookies/server";
 import { getCookies } from "next-client-cookies/server";
 
 import { ToastContainer } from 'react-toastify';
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.scss";
-
-import {api} from "@/lib/api";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +40,7 @@ export default async function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
+          <Toaster />
           <ToastContainer style={{ zIndex: 99999999 }} />
         </body>
       </html>

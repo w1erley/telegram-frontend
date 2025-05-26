@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {useApi} from "@/hooks/useApi"
@@ -92,11 +91,15 @@ function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     console.log("Login data:", data)
-    const { user, session, token } = await post('login', {
-      body: data
-    });
-    Cookies.set('access_token', token?.plainTextToken);
-    router.push('/k');
+    try {
+      const { token } = await post('login', {
+        body: data
+      });
+      Cookies.set('access_token', token?.plainTextToken);
+      router.push('/k');
+    } catch (e) {
+      toastError(e)
+    }
   }
 
   return (
@@ -142,10 +145,12 @@ function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     console.log("Register data:", data)
-    const responseData = await post('register', {
-      body: data
-    });
-    window.location.reload();
+    post('register', { body: data })
+      .then(() => {
+        window.location.reload();
+      })
+      .catch(toastError);
+
   }
 
   return (

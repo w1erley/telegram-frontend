@@ -9,6 +9,7 @@ export interface ChatSummary {
   last_message_time?: string;
   unread: number;
   me_id: number;
+  recipient_id?: number | null;
 }
 
 export interface MessageDto {

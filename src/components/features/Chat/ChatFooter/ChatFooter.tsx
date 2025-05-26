@@ -3,23 +3,41 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {useApi} from "@/hooks/useApi";
 import {useState} from "react";
-import {MessageDto} from "@/types/chat";
+import {ChatSummary, MessageDto} from "@/types/chat";
+import {useChatStore} from "@/contexts/ChatStoreContext";
 
-export function ChatFooter({ chatId }: { chatId: number }) {
+interface ChatFooterProps {
+  chat: ChatSummary
+}
+
+export function ChatFooter({ chat }: ChatFooterProps) {
   const { post } = useApi();
+  const { dispatch } = useChatStore();
+
   const [body, setBody] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  const send = (e: React.FormEvent) => {
+  const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim()) return;
 
     setSendingMessage(true);
-    post<MessageDto>(`/chats/${chatId}/messages`, { body: { body } })
-      .then(() => setBody(""))
-      .finally(() => {
-        setSendingMessage(false)
-      });
+    try {
+      if (chat.id) {
+        const msg = await post<MessageDto>(
+          `/chats/${chat.id}/messages`, { body: { body } }
+        );
+        dispatch({ type:"ADD_MSG", chatId: chat.id, msg });
+      } else {
+        // virtual chat
+        const realChat = await post<ChatSummary>(
+          `/chats/private/${chat?.recipient_id}`, { body: { body } }
+        );
+        dispatch({ type:"UPSERT_CHAT", payload: realChat });
+        // active chat setter in parent should pick this up via hash change
+      }
+      setBody("");
+    } finally { setSendingMessage(false); }
   };
 
   return (
@@ -36,7 +54,7 @@ export function ChatFooter({ chatId }: { chatId: number }) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
       />
-      <Button disabled={!chatId || !body.trim() || sendingMessage} onClick={send}>
+      <Button disabled={!body.trim() || sendingMessage} onClick={send}>
         <MessageCircle className="mr-2 h-4 w-4" />
         Send
       </Button>

@@ -1,12 +1,12 @@
 "use client"
 
-import type { Dispatch, SetStateAction } from "react"
 import { ChatHeader } from "./ChatHeader/ChatHeader"
 import { ChatContent } from "./ChatContent/ChatContent"
 import { ChatFooter } from "./ChatFooter/ChatFooter"
+import {ChatSummary} from "@/types/chat";
 
 interface ChatProps {
-  activeChat: any
+  activeChat: ChatSummary
   toggleSidebar: () => void
 }
 
@@ -15,9 +15,15 @@ export function Chat({ activeChat, toggleSidebar }: ChatProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
-      <ChatHeader activeChat={activeChat} toggleSidebar={toggleSidebar}/>
-      <ChatContent activeChat={activeChat}/>
-      <ChatFooter chatId={activeChat?.id}/>
+      {activeChat ? (
+        <>
+          <ChatHeader activeChat={activeChat} toggleSidebar={toggleSidebar}/>
+          <ChatContent activeChat={activeChat}/>
+          <ChatFooter chat={activeChat}/>
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">Select a chat</div>
+      )}
     </div>
   )
 }
