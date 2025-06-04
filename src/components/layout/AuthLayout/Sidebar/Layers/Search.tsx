@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useApi } from "@/hooks/useApi";
 import { LayerType } from "@/components/layout/AuthLayout/Sidebar/Sidebar";
+import {Message} from "@/types/chat";
 
 interface SearchProps {
   activeLayer: LayerType;
@@ -18,7 +19,7 @@ interface SearchItem {
   title: string;
   description: string;
   redirect_url: string;
-  message?: any;
+  message?: Message;
 }
 
 interface SearchResponse {

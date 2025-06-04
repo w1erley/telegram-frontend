@@ -15,4 +15,30 @@ export function formatDate(input: string | number): string {
   })
 }
 
+export function formatTime(dateString?: string | Date) {
+  if (!dateString) return ""
+
+  const d = typeof dateString === "string" ? new Date(dateString) : dateString
+  const now = new Date()
+
+  const isToday =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+
+  const timePart = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+
+  if (isToday) {
+    return timePart
+  }
+
+  const monthDay = d.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  })
+
+  return `${monthDay} at ${timePart}`
+}
+
+
 export { toastError };

@@ -11,8 +11,6 @@ interface ChatProps {
 }
 
 export function Chat({ activeChat, toggleSidebar }: ChatProps) {
-  console.log("activeChat", activeChat);
-
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
       {activeChat ? (

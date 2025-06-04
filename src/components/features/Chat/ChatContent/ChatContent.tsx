@@ -1,112 +1,216 @@
-import {useMemo, useEffect, useRef, useState} from "react";
-import {ChatMessage} from "./ChatMessage/ChatMessage";
-import {ChatSummary, MessageDto} from "@/types/chat";
-import {useApi} from "@/hooks/useApi";
-import {useChatChannel} from "@/hooks/useChatChannel";
-import {useChatStore} from "@/contexts/ChatStoreContext";
+"use client"
 
-interface ChatContentProps {
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso"
+import { ChatMessage } from "./ChatMessage/ChatMessage"
+import { useApi } from "@/hooks/useApi"
+import { useChatStore } from "@/contexts/ChatStoreContext"
+import type { ChatSummary, Message, MessageStat } from "@/types/chat"
+
+interface Props {
   activeChat: ChatSummary
 }
 
-export function ChatContent({ activeChat }: ChatContentProps) {
-  const { state, dispatch } = useChatStore();
-  const { get } = useApi();
-  const [loadingMore, setLoadingMore] = useState(false);
+const INITIAL_INDEX = 10_000
+const PAGE = 20
 
-  const messages = useMemo(() => {
-    return state.messages[activeChat.id!] ?? [];
-  }, [state.messages, activeChat.id]);
-  const endRef   = useRef<HTMLDivElement>(null);
-  const boxRef   = useRef<HTMLDivElement>(null);
+export function ChatContent({ activeChat }: Props) {
+  const { state, dispatch } = useChatStore()
+  const { get, post } = useApi()
 
-  /* -------- first entry to a chat -------- */
+  const vRef = useRef<VirtuosoHandle>(null)
+  const atBottomRef = useRef(true)
+
+  const prevTrimLenRef = useRef(0)
+  const prevScrollLenRef = useRef(0)
+  const prevFirstIdxRef = useRef(INITIAL_INDEX)
+
+  const isRestoringScrollRef = useRef(false)
+
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const [firstIndex, setFirstIndex] = useState(INITIAL_INDEX)
+
+  const msgs = useMemo(
+    () => state.messages[activeChat.id!] ?? [],
+    [state.messages, activeChat.id]
+  )
+
+  // щоб не надсилати повторних read-запитів для одного й того ж повідомлення
+  const lastMarkedRef = useRef<number | null>(null)
+
   useEffect(() => {
-    if (!activeChat.id) return;                        // virtual chat
-    if (messages.length) return;                       // already cached
-
-    get<MessageDto[]>(`/chats/${activeChat.id}/messages?limit=30`)
-      .then(list => dispatch({ type:"APPEND_HISTORY",
-        chatId: activeChat.id!, older: list }));
-  }, [activeChat.id]);
-
-  /* -------- live updates for open chat -------- */
-  // useChatChannel(activeChat.id!, {
-  //   onMessage: m  => dispatch({ type:"ADD_MSG",    chatId: activeChat.id!, msg:m }),
-  //   onDelete:  id => dispatch({ type:"DELETE_MSG", chatId: activeChat.id!, msgId:id }),
-  //   onEdit:    m  => dispatch({ type:"EDIT_MSG",   chatId: activeChat.id!, msg:m }),
-  // });
-
-  useEffect(() => {
-    const saved = state.scroll[activeChat.id!];
-    if (saved && boxRef.current) boxRef.current.scrollTop = saved;
-  }, [activeChat.id]);
-
-  const handleScroll = () => {
-    if (!boxRef.current) return;
-    dispatch({ type:"SET_SCROLL", chatId: activeChat.id!, offset: boxRef.current.scrollTop });
-
-    if (boxRef.current.scrollTop === 0 && !loadingMore) {
-      setLoadingMore(true);
-
-      const prevHeight = boxRef.current.scrollHeight;
-
-      const oldest = messages[0]?.id;
-      get<MessageDto[]>(`/chats/${activeChat.id}/messages?before=${oldest}&limit=20`)
-        .then(older => {
-          dispatch({ type:"APPEND_HISTORY", chatId: activeChat.id!, older });
-
-          requestAnimationFrame(() => {
-            if (boxRef.current)
-              boxRef.current.scrollTop =
-                boxRef.current.scrollHeight - prevHeight;
-          });
-        })
-        .finally(() => setLoadingMore(false));
+    const prev = prevTrimLenRef.current
+    if (prev && msgs.length < prev) {
+      const removed = prev - msgs.length
+      setFirstIndex((i) => i + removed)
     }
-  };
-
-  const atBottomRef = useRef(true);
-
-  const updateBottomRef = () => {
-    if (!boxRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = boxRef.current;
-    atBottomRef.current = scrollHeight - (scrollTop + clientHeight) < 60;
-  };
+    prevTrimLenRef.current = msgs.length
+  }, [msgs.length])
 
   useEffect(() => {
-    const box = boxRef.current;
-    if (!box) return;
-    box.addEventListener("scroll", updateBottomRef);
-    return () => box.removeEventListener("scroll", updateBottomRef);
-  }, []);
+    if (!activeChat.id || msgs.length) return
+
+    get<Message[]>(`/chats/${activeChat.id}/messages?limit=${PAGE}`).then((list) => {
+      setFirstIndex(INITIAL_INDEX - list.length)
+      dispatch({ type: "INIT_HISTORY", chatId: activeChat.id!, list })
+
+      const savedIdx = state.scroll[activeChat.id!] ?? null
+
+      if (savedIdx !== null && list.length > savedIdx) {
+        isRestoringScrollRef.current = true
+
+        setTimeout(() => {
+          vRef.current?.scrollToIndex({
+            index: INITIAL_INDEX - list.length + savedIdx,
+            align: "start",
+          })
+
+          isRestoringScrollRef.current = false
+        }, 0)
+      } else {
+        setTimeout(() => {
+          const lastIdx = list.length - 1
+          vRef.current?.scrollToIndex({
+            index: INITIAL_INDEX - list.length + lastIdx,
+            align: "end",
+          })
+
+          if (list.length > 0) {
+            markReadUpTo(list[lastIdx].id)
+          }
+        }, 0)
+      }
+    })
+  }, [activeChat.id])
+
+  const loadOlder = async () => {
+    if (!msgs.length) return
+    setLoadingOlder(true)
+
+    const older = await get<Message[]>(
+      `/chats/${activeChat.id}/messages?before=${msgs[0].id}&limit=${PAGE}`
+    )
+    setLoadingOlder(false)
+
+    if (!older.length) return
+
+    setFirstIndex((i) => i - older.length)
+    dispatch({ type: "PREPEND_OLDER", chatId: activeChat.id!, older })
+  }
+
+  const loadNewer = async () => {
+    if (!msgs.length) return
+
+    const newer = await get<Message[]>(
+      `/chats/${activeChat.id}/messages?after=${msgs[msgs.length - 1].id}&limit=${PAGE}`
+    )
+    if (!newer.length) return
+
+    dispatch({ type: "APPEND_NEWER", chatId: activeChat.id!, newer })
+
+    const last = newer[newer.length - 1]
+    // якщо юзер був унизу або це моє останнє власне повідомлення — скролимо в кінець
+    if (atBottomRef.current || last.sender_id === activeChat.me_id) {
+      vRef.current?.scrollToIndex({
+        index: firstIndex + msgs.length + newer.length - 1,
+        align: "end",
+      })
+    }
+  }
 
   useEffect(() => {
-    if (!endRef.current) return;
-    if (loadingMore) return;
-    if (!atBottomRef.current) return;
+    if (!msgs.length) return
+    const lenIncreased = msgs.length > prevScrollLenRef.current
+    const firstUnchanged = firstIndex === prevFirstIdxRef.current
+    const isAppend = lenIncreased && firstUnchanged
 
-    endRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loadingMore]);
+    if (isAppend) {
+      const last = msgs[msgs.length - 1]
+      if (last.sender_id === activeChat.me_id) {
+        vRef.current?.scrollToIndex({
+          index: firstIndex + msgs.length - 1,
+          align: "end",
+        })
+      }
+    }
+    prevScrollLenRef.current = msgs.length
+    prevFirstIdxRef.current = firstIndex
+  }, [msgs.length, firstIndex, activeChat.me_id])
+
+  const markReadUpTo = (lastId: number) => {
+    if (lastMarkedRef.current === lastId) return
+    lastMarkedRef.current = lastId
+    post(`/chats/${activeChat.id}/messages/${lastId}/read`)
+  }
+
+  const onBottomChange = (atBottom: boolean) => {
+    atBottomRef.current = atBottom
+
+    if (atBottom && msgs.length && !isRestoringScrollRef.current) {
+      markReadUpTo(msgs[msgs.length - 1].id)
+    }
+  }
+
+  // Коли змінюється кількість або скрол, перевіряємо видимий діапазон
+  const onRangeChanged = ({
+                            startIndex,
+                            endIndex,
+                          }: {
+    startIndex: number
+    endIndex: number
+  }) => {
+    if (isRestoringScrollRef.current) return
+
+    // Знайдемо індекс останнього видимого повідомлення
+    const lastVisibleIndex = endIndex - firstIndex
+    if (lastVisibleIndex < 0 || lastVisibleIndex >= msgs.length) return
+
+    const msg = msgs[lastVisibleIndex]
+    if (!msg) return
+
+    // Перевіряємо, чи вже є у цього повідомлення статус читання від мене
+    const hasMyStat = Array.isArray(msg.stats)
+      ? msg.stats.some((s: MessageStat) => s.user_id === activeChat.me_id)
+      : false
+
+    if (!hasMyStat) {
+      markReadUpTo(msg.id)
+    }
+  }
+
+  console.log("messages", msgs)
+
+  const components = {
+    Header: () =>
+      loadingOlder ? (
+        <div className="flex justify-center py-2 text-sm text-primary-foreground">
+          Loading…
+        </div>
+      ) : null,
+  }
 
   return (
-    <div
-      ref={boxRef}
-      onScroll={handleScroll}
-      className="flex-1 overflow-y-auto p-4 bg-opacity-90 bg-repeat"
-    >
-      {messages.map((m, i) => (
+    <Virtuoso
+      ref={vRef}
+      className="flex-1 overflow-y-auto"
+      data={msgs}
+      firstItemIndex={firstIndex}
+      initialTopMostItemIndex={msgs.length - 1}
+      startReached={loadOlder}
+      endReached={loadNewer}
+      atBottomStateChange={onBottomChange}
+      rangeChanged={onRangeChanged}
+      followOutput="smooth"
+      overscan={200}
+      components={components}
+      itemContent={(idx, m) => (
         <ChatMessage
-          key={`${m.id}-${i}`}
-          sender={m.sender.name}
-          text={m.body}
-          time={new Date(m.created_at)
-            .toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}
+          key={m.id}
+          message={m}
           isIncoming={m.sender_id !== activeChat.me_id}
-          isOutgoing={m.sender_id === activeChat.me_id}
+          me={activeChat.me_id}
         />
-      ))}
-      <div ref={endRef} />
-    </div>
-  );
+      )}
+    />
+  )
 }

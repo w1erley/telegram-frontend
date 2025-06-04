@@ -6,81 +6,98 @@ import {
   Menu,
   Bookmark,
   Archive,
-  History,
   Users,
   Settings,
   MoreHorizontal,
   Plus,
   Moon,
-  Zap,
-  SwitchCamera,
-  Info,
-  AlertTriangle,
-  Download,
   User,
-  Megaphone, ArrowLeft
+  Megaphone
 } from "lucide-react"
-import {JSX, useEffect, useState} from "react"
+import {JSX, useState} from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import {cn, formatTime} from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useCookies } from 'next-client-cookies';
 
 import { Settings as SettingsLayer, Search as SearchLayer } from "./Layers"
+import {ChatSummary} from "@/types/chat";
+import {useAuth} from "@/contexts/AuthContext";
+import ActiveSessions from "@/components/layout/AuthLayout/Sidebar/Layers/ActiveSessions";
 
 interface SidebarProps {
-  chats: any[]
-  activeChat: any
+  chats: ChatSummary[]
+  activeChat: ChatSummary
   setActiveChat: (chatAlias: string) => void
 }
 
-export type LayerType = 'main' | 'archive' | 'search' | 'contacts' | 'settings'
+export type LayerType = 'main' | 'archive' | 'search' | 'active_sessions' | 'settings'
 
 export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
   const cookies = useCookies();
   const currentTheme = cookies.get('theme');
 
+  const { user } = useAuth()
+
   const [activeLayer, setActiveLayer] = useState<LayerType>('main');
-  console.log('activeLayer', activeLayer);
 
-  const [chatGroups, setChatGroups] = useState([
-    { id: 1, name: "All Chats", isActive: true },
-    { id: 2, name: "Personal", isActive: false },
-    { id: 3, name: "Work", isActive: false },
-    { id: 4, name: "Friends", isActive: false },
-    { id: 5, name: "Family", isActive: false },
-    { id: 6, name: "News", isActive: false },
-    { id: 7, name: "Important", isActive: false },
-  ]);
-
-  const archivedChats = [
-    { id: 101, name: "Old Project", alias: "old-project", lastMessage: "We should archive this project", time: "2w", unread: 0 },
-    { id: 102, name: "Previous Team", alias: "prev-team", lastMessage: "Thanks for all your work!", time: "1m", unread: 0 },
-    { id: 103, name: "Conference 2023", alias: "conf-2023", lastMessage: "The slides are now available", time: "3m", unread: 0 },
-  ];
-
-  // Sample contacts
-  const contacts = [
-    { id: 201, name: "Alex Johnson", alias: "alex", status: "online", lastSeen: "now" },
-    { id: 202, name: "Maria Garcia", alias: "maria", status: "offline", lastSeen: "2h ago" },
-    { id: 203, name: "James Smith", alias: "james", status: "online", lastSeen: "now" },
-    { id: 204, name: "Sarah Wilson", alias: "sarah", status: "offline", lastSeen: "yesterday" },
-    { id: 205, name: "David Brown", alias: "david", status: "online", lastSeen: "now" },
-  ];
+  // const [chatGroups, setChatGroups] = useState([
+  //   { id: 1, name: "All Chats", isActive: true },
+  //   { id: 2, name: "Personal", isActive: false },
+  //   { id: 3, name: "Work", isActive: false },
+  //   { id: 4, name: "Friends", isActive: false },
+  //   { id: 5, name: "Family", isActive: false },
+  //   { id: 6, name: "News", isActive: false },
+  //   { id: 7, name: "Important", isActive: false },
+  // ]);
+  //
+  // const archivedChats = [
+  //   { id: 101, name: "Old Project", alias: "old-project", lastMessage: "We should archive this project", time: "2w", unread: 0 },
+  //   { id: 102, name: "Previous Team", alias: "prev-team", lastMessage: "Thanks for all your work!", time: "1m", unread: 0 },
+  //   { id: 103, name: "Conference 2023", alias: "conf-2023", lastMessage: "The slides are now available", time: "3m", unread: 0 },
+  // ];
+  //
+  // // Sample contacts
+  // const contacts = [
+  //   { id: 201, name: "Alex Johnson", alias: "alex", status: "online", lastSeen: "now" },
+  //   { id: 202, name: "Maria Garcia", alias: "maria", status: "offline", lastSeen: "2h ago" },
+  //   { id: 203, name: "James Smith", alias: "james", status: "online", lastSeen: "now" },
+  //   { id: 204, name: "Sarah Wilson", alias: "sarah", status: "offline", lastSeen: "yesterday" },
+  //   { id: 205, name: "David Brown", alias: "david", status: "online", lastSeen: "now" },
+  // ];
 
   // Settings options
 
 
   const menuItems: { icon: JSX.Element; label: string; onClick?: () => void }[] = [
-    { icon: <Users className="h-5 w-5" />, label: "Create group" },
-    { icon: <Megaphone className="h-5 w-5" />, label: "Create channel" },
-    { icon: <Bookmark className="h-5 w-5" />, label: "Saved Messages" },
-    { icon: <Archive className="h-5 w-5" />, label: "Archived Chats"},
+    {
+      icon: <Users className="h-5 w-5" />,
+      label: "Create group"
+    },
+    {
+      icon: <Megaphone className="h-5 w-5" />,
+      label: "Create channel"
+    },
+    {
+      icon: <Bookmark className="h-5 w-5" />,
+      label: "Saved Messages"
+    },
+    {
+      icon: <Archive className="h-5 w-5" />,
+      label: "Archived Chats"
+    },
     // { icon: <History className="h-5 w-5" />, label: "My Stories" },
-    { icon: <User className="h-5 w-5" />, label: "Contacts" },
-    { icon: <Settings className="h-5 w-5" />, label: "Settings", onClick: () => setActiveLayer('settings') },
+    {
+      icon: <User className="h-5 w-5" />,
+      label: "Contacts"
+    },
+    {
+      icon: <Settings className="h-5 w-5" />,
+      label: "Settings",
+      onClick: () => setActiveLayer('settings')
+    },
   ];
 
   const moreMenuItems = [
@@ -90,9 +107,9 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
         "Disable Dark Mode" :
         "Enable Dark Mode",
       onClick: () => {
-        currentTheme === "dark" ?
-          cookies.set('theme', 'light') :
-          cookies.set('theme', 'dark')
+        void (currentTheme === "dark"
+          ? cookies.set('theme', 'light')
+          : cookies.set('theme', 'dark'))
         window.location.reload();
       }
     },
@@ -103,20 +120,26 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
     // { icon: <Download className="h-5 w-5" />, label: "Install App" },
   ]
 
-  const handleGroupChange = (groupId: number) => {
-    setChatGroups(
-      chatGroups.map((group) => ({
-        ...group,
-        isActive: group.id === groupId,
-      })),
-    )
-  }
+  // const handleGroupChange = (groupId: number) => {
+  //   setChatGroups(
+  //     chatGroups.map((group) => ({
+  //       ...group,
+  //       isActive: group.id === groupId,
+  //     })),
+  //   )
+  // }
 
   const isOpen = true;
 
   const handleSearchClick = () => {
     setActiveLayer('search');
   };
+
+  const filteredChats = chats.sort((a, b) => {
+    const aTime = new Date(a.last_message?.created_at ?? a.created_at).getTime();
+    const bTime = new Date(b.last_message?.created_at ?? b.created_at).getTime();
+    return bTime - aTime;
+  });
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -141,12 +164,12 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
                     <div className="py-2">
                       <div className="p-3 flex items-center gap-2 border-b">
                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                          К
+                          {user?.username.charAt(0)}
                         </div>
-                        <div className="font-medium">котакбас 1992</div>
+                        <div className="font-medium">{user?.username}</div>
                       </div>
 
-                      <Button variant="ghost" className="w-full justify-start px-3 py-2 h-10 rounded-none">
+                      <Button disabled={true} variant="ghost" className="w-full justify-start px-3 py-2 h-10 rounded-none">
                         <Plus className="h-5 w-5" />
                         <span className="ml-2">Add Account</span>
                       </Button>
@@ -155,6 +178,7 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
 
                       {menuItems.map((item, index) => (
                         <Button
+                          disabled={!item?.onClick}
                           key={index}
                           variant="ghost"
                           className="w-full justify-start px-3 py-2 h-10 rounded-none"
@@ -225,7 +249,7 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
 
               {/* Chats */}
               <div className="flex-1 overflow-y-auto">
-                {chats.map((chat) => {
+                {filteredChats.map((chat) => {
                   const isActive = activeChat?.id === chat.id;
                   return (
                     <div
@@ -237,15 +261,15 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
                       onClick={() => setActiveChat(chat.alias)}
                     >
                       <div className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center text-primary-foreground">
-                        {chat.title.charAt(0)}
+                        {chat?.title?.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between">
                           <div className="font-medium truncate">{chat.title}</div>
-                          <div className={cn("text-xs", !isActive && "text-muted-foreground")}>{chat.time}</div>
+                          <div className={cn("text-xs", !isActive && "text-muted-foreground")}>{formatTime(chat?.last_message?.created_at)}</div>
                         </div>
                         <div className={"flex justify-between"}>
-                          <div className={cn("text-sm truncate", !isActive && "text-muted-foreground")}>{chat.lastMessage}</div>
+                          <div className={cn("text-sm truncate", !isActive && "text-muted-foreground")}>{chat?.last_message?.body}</div>
                           {chat.unread > 0 && (
                             <div className={cn(
                               "min-w-5 h-5 p-1 rounded-full flex items-center justify-center text-xs",
@@ -315,61 +339,17 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
         <SearchLayer activeLayer={activeLayer} setActiveLayer={setActiveLayer}/>
       )}
 
-      {/* Contacts Layer */}
-      {/*{activeLayer === 'contacts' && (*/}
-      {/*  <div*/}
-      {/*    className={cn(*/}
-      {/*      "absolute inset-0 h-full border-r bg-background flex flex-col transition-transform duration-300 ease-in-out",*/}
-      {/*      activeLayer === 'contacts' ? "translate-x-0 z-20" : "translate-x-full z-10"*/}
-      {/*    )}*/}
-      {/*  >*/}
-      {/*    <div className="p-3 border-b flex items-center gap-2">*/}
-      {/*      <Button variant="ghost" size="icon" onClick={() => setActiveLayer('main')}>*/}
-      {/*        <ArrowLeft className="h-5 w-5" />*/}
-      {/*      </Button>*/}
-      {/*      <h2 className="font-medium">Contacts</h2>*/}
-      {/*    </div>*/}
-      {/*    <div className="p-3 border-b">*/}
-      {/*      <div className="relative">*/}
-      {/*        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />*/}
-      {/*        <Input className="pl-9" placeholder="Search contacts" />*/}
-      {/*      </div>*/}
-      {/*    </div>*/}
-      {/*    <div className="flex-1 overflow-y-auto">*/}
-      {/*      {contacts.map((contact) => (*/}
-      {/*        <div*/}
-      {/*          key={contact.id}*/}
-      {/*          className="p-3 flex items-center gap-3 cursor-pointer hover:bg-muted"*/}
-      {/*          onClick={() => {*/}
-      {/*            // In a real app, you might create a new chat or open an existing one*/}
-      {/*            setActiveLayer('main');*/}
-      {/*          }}*/}
-      {/*        >*/}
-      {/*          <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground">*/}
-      {/*            {contact.name.charAt(0)}*/}
-      {/*          </div>*/}
-      {/*          <div className="flex-1 min-w-0">*/}
-      {/*            <div className="font-medium">{contact.name}</div>*/}
-      {/*            <div className="text-sm text-muted-foreground">*/}
-      {/*              {contact.status === 'online' ? (*/}
-      {/*                <span className="flex items-center">*/}
-      {/*                  <span className="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>*/}
-      {/*                  Online*/}
-      {/*                </span>*/}
-      {/*              ) : (*/}
-      {/*                `Last seen ${contact.lastSeen}`*/}
-      {/*              )}*/}
-      {/*            </div>*/}
-      {/*          </div>*/}
-      {/*        </div>*/}
-      {/*      ))}*/}
-      {/*    </div>*/}
-      {/*  </div>*/}
-      {/*)}*/}
-
       {/* Settings Layer */}
       {activeLayer === 'settings' && (
-        <SettingsLayer activeLayer={activeLayer} setActiveLayer={setActiveLayer}/>
+        <SettingsLayer
+          user={user}
+          activeLayer={activeLayer}
+          setActiveLayer={setActiveLayer}
+        />
+      )}
+
+      {activeLayer === 'active_sessions' && (
+        <ActiveSessions activeLayer={activeLayer} setActiveLayer={setActiveLayer}/>
       )}
     </div>
   )

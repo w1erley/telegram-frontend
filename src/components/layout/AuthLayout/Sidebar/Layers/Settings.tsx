@@ -1,22 +1,20 @@
-import {Dispatch, ReactNode, SetStateAction} from "react";
+import {Dispatch, SetStateAction} from "react";
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {AlertTriangle, ArrowLeft, ChevronRight, Info, Megaphone, Moon, User} from "lucide-react";
-import {Input} from "@/components/ui/input";
+import {AlertTriangle, ArrowLeft, ChevronRight, User as UserIcon} from "lucide-react";
 import {LayerType} from "@/components/layout/AuthLayout/Sidebar/Sidebar";
+import {User} from "@/contexts/AuthContext";
 
 interface SettingsProps {
+  user: User | null
   activeLayer: LayerType
   setActiveLayer: Dispatch<SetStateAction<LayerType>>
 }
 
-const Settings: React.FC<SettingsProps> = ({ activeLayer, setActiveLayer }) => {
+const Settings: React.FC<SettingsProps> = ({ user, activeLayer, setActiveLayer }) => {
   const settingsOptions = [
-    { id: 301, name: "Account", icon: <User className="h-5 w-5" /> },
-    { id: 302, name: "Privacy & Security", icon: <AlertTriangle className="h-5 w-5" /> },
-    { id: 303, name: "Notifications", icon: <Megaphone className="h-5 w-5" /> },
-    { id: 304, name: "Appearance", icon: <Moon className="h-5 w-5" /> },
-    { id: 305, name: "Language", icon: <Info className="h-5 w-5" /> },
+    { id: 301, name: "Account", icon: <UserIcon className="h-5 w-5" /> },
+    { id: 302, name: "Active sessions", icon: <AlertTriangle className="h-5 w-5" />, onClick: () => setActiveLayer('active_sessions') },
   ];
 
   return (
@@ -34,40 +32,27 @@ const Settings: React.FC<SettingsProps> = ({ activeLayer, setActiveLayer }) => {
       </div>
       <div className="p-4 border-b flex items-center gap-3">
         <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xl">
-          К
+          {user?.username?.charAt(0)}
         </div>
         <div>
-          <div className="font-medium text-lg">котакбас 1992</div>
-          <div className="text-sm text-muted-foreground">+1 234 567 8900</div>
+          <div className="font-medium text-lg">{user?.username}</div>
+          <div className="text-sm text-muted-foreground">{user?.name}</div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         {settingsOptions.map((option) => (
           <Button
+            disabled={!option.onClick}
             key={option.id}
             variant="ghost"
             className="w-full justify-start px-4 py-3 h-14 rounded-none"
+            onClick={option?.onClick}
           >
             <div className="mr-3">{option.icon}</div>
             <span>{option.name}</span>
             <ChevronRight className="ml-auto h-4 w-4" />
           </Button>
         ))}
-        {/*<div className="p-4">*/}
-        {/*  <Button*/}
-        {/*    variant="ghost"*/}
-        {/*    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"*/}
-        {/*    onClick={() => {*/}
-        {/*      currentTheme === "dark" ?*/}
-        {/*        cookies.set('theme', 'light') :*/}
-        {/*        cookies.set('theme', 'dark')*/}
-        {/*      window.location.reload();*/}
-        {/*    }}*/}
-        {/*  >*/}
-        {/*    <Moon className="h-5 w-5 mr-2" />*/}
-        {/*    {currentTheme === "dark" ? "Disable Dark Mode" : "Enable Dark Mode"}*/}
-        {/*  </Button>*/}
-        {/*</div>*/}
       </div>
     </div>
   )

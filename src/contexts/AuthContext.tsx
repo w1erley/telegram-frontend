@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useApi } from "@/hooks/useApi";
 import { toastError } from "@/lib/utils";
 
-export interface UserDto {
+export interface User {
   id: number;
   name: string;
   username: string;
@@ -11,7 +11,7 @@ export interface UserDto {
 }
 
 type AuthState = {
-  user:    UserDto | null;
+  user:    User | null;
   loading: boolean;
   refresh: () => Promise<void>;  // refetch /user
 };
@@ -24,13 +24,13 @@ const AuthContext = createContext<AuthState>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { get } = useApi();
-  const [user, setUser] = useState<UserDto | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
     setLoading(true);
     try {
-      setUser(await get<UserDto>("/user/me"));
+      setUser(await get<User>("/user/me"));
     } catch (e) {
       toastError(e);
       setUser(null);

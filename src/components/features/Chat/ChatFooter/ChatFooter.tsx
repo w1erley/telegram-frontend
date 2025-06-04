@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {useApi} from "@/hooks/useApi";
 import {useState} from "react";
-import {ChatSummary, MessageDto} from "@/types/chat";
+import {ChatSummary, Message} from "@/types/chat";
 import {useChatStore} from "@/contexts/ChatStoreContext";
 
 interface ChatFooterProps {
@@ -24,7 +24,7 @@ export function ChatFooter({ chat }: ChatFooterProps) {
     setSendingMessage(true);
     try {
       if (chat.id) {
-        const msg = await post<MessageDto>(
+        const msg = await post<Message>(
           `/chats/${chat.id}/messages`, { body: { body } }
         );
         dispatch({ type:"ADD_MSG", chatId: chat.id, msg });
