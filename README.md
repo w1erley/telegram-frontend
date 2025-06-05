@@ -17,7 +17,7 @@ This is the frontend for the messenger application, built on Next.js 15 and Reac
    cd frontend
    ```
 
-2. **Create `.env` file in the project root (see provided example files):**
+2. **Create `.env` file in the project root (see provided example file):**
 
 3. **Install dependencies:**
    ```bash
