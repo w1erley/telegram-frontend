@@ -90,7 +90,6 @@ function LoginForm() {
   const { post } = useApi()
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log("Login data:", data)
     try {
       const { token } = await post('login', {
         body: data
@@ -144,7 +143,6 @@ function RegisterForm() {
   const { post } = useApi()
 
   const onSubmit = async (data: RegisterFormData) => {
-    console.log("Register data:", data)
     post('register', { body: data })
       .then(() => {
         window.location.reload();

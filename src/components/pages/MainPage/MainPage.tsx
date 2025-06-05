@@ -13,7 +13,6 @@ const MainPage: React.FC = () => {
   const { state, activeChat, navigateToChat } = useChatStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Initialize hooks
   useInitialDataLoad();
   useUrlSync();
   useWebSocketConnection();

@@ -12,30 +12,33 @@ import {
   Plus,
   Moon,
   User,
-  Megaphone
+  Megaphone, LogOut
 } from "lucide-react"
 import {JSX, useState} from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {cn, formatTime} from "@/lib/utils"
+import {cn, formatTime, toastError} from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useCookies } from 'next-client-cookies';
 
 import { Settings as SettingsLayer, Search as SearchLayer } from "./Layers"
-import {ChatSummary} from "@/types/chat";
+import {ChatSummary, type Message} from "@/types/chat";
 import {useAuth} from "@/contexts/AuthContext";
 import ActiveSessions from "@/components/layout/AuthLayout/Sidebar/Layers/ActiveSessions";
+import {useApi} from "@/hooks/useApi";
 
 interface SidebarProps {
   chats: ChatSummary[]
-  activeChat: ChatSummary
+  activeChat: ChatSummary | null
   setActiveChat: (chatAlias: string) => void
 }
 
 export type LayerType = 'main' | 'archive' | 'search' | 'active_sessions' | 'settings'
 
 export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
+  const { post } = useApi()
+
   const cookies = useCookies();
   const currentTheme = cookies.get('theme');
 
@@ -100,6 +103,16 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
     },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await post(`/logout`)
+      cookies.remove("access_token");
+      window.location.reload();
+    } catch (e) {
+      toastError(e)
+    }
+  }
+
   const moreMenuItems = [
     {
       icon: <Moon className="h-5 w-5" />,
@@ -112,6 +125,11 @@ export function Sidebar({ chats, activeChat, setActiveChat }: SidebarProps) {
           : cookies.set('theme', 'dark'))
         window.location.reload();
       }
+    },
+    {
+      icon: <LogOut className="h-5 w-5" />,
+      label: "Logout",
+      onClick: handleLogout,
     },
     // { icon: <Zap className="h-5 w-5" />, label: "Disable Animations" },
     // { icon: <SwitchCamera className="h-5 w-5" />, label: "Switch to A version" },

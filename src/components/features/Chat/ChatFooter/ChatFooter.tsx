@@ -29,12 +29,10 @@ export function ChatFooter({ chat }: ChatFooterProps) {
         );
         dispatch({ type:"ADD_MSG", chatId: chat.id, msg });
       } else {
-        // virtual chat
         const realChat = await post<ChatSummary>(
           `/chats/private/${chat?.recipient_id}`, { body: { body } }
         );
-        dispatch({ type:"UPSERT_CHAT", payload: realChat });
-        // active chat setter in parent should pick this up via hash change
+        dispatch({ type: "REPLACE_CHAT", oldId: chat.id ?? null, newChat: realChat });
       }
       setBody("");
     } finally { setSendingMessage(false); }

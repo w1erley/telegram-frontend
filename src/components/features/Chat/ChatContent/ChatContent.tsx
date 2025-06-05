@@ -6,6 +6,7 @@ import { ChatMessage } from "./ChatMessage/ChatMessage"
 import { useApi } from "@/hooks/useApi"
 import { useChatStore } from "@/contexts/ChatStoreContext"
 import type { ChatSummary, Message, MessageStat } from "@/types/chat"
+import {toastError} from "@/lib/utils";
 
 interface Props {
   activeChat: ChatSummary
@@ -16,7 +17,9 @@ const PAGE = 20
 
 export function ChatContent({ activeChat }: Props) {
   const { state, dispatch } = useChatStore()
-  const { get, post } = useApi()
+  const { get, post, del, patch } = useApi()
+
+  console.log("activeChat", activeChat);
 
   const vRef = useRef<VirtuosoHandle>(null)
   const atBottomRef = useRef(true)
@@ -153,9 +156,9 @@ export function ChatContent({ activeChat }: Props) {
 
   // Коли змінюється кількість або скрол, перевіряємо видимий діапазон
   const onRangeChanged = ({
-                            startIndex,
-                            endIndex,
-                          }: {
+    startIndex,
+    endIndex,
+  }: {
     startIndex: number
     endIndex: number
   }) => {
@@ -189,6 +192,30 @@ export function ChatContent({ activeChat }: Props) {
       ) : null,
   }
 
+  const handleDelete = async (message: Message) => {
+    try {
+      await del(`/chats/${message.chat_id}/messages/${message.id}`)
+    } catch (e) {
+      toastError(e)
+    }
+  }
+
+  const handleCopyText = (message: Message) => {
+    navigator.clipboard.writeText(message.body)
+  }
+
+  const handleEdit = async (message: Message, newText: string) => {
+    try {
+      await patch(`/chats/${message.chat_id}/messages/${message.id}`, {
+        body: {
+          body: newText,
+        }
+      });
+    } catch (e) {
+      toastError(e);
+    }
+  };
+
   return (
     <Virtuoso
       ref={vRef}
@@ -209,6 +236,9 @@ export function ChatContent({ activeChat }: Props) {
           message={m}
           isIncoming={m.sender_id !== activeChat.me_id}
           me={activeChat.me_id}
+          onDelete={handleDelete}
+          onCopyText={handleCopyText}
+          onEdit={handleEdit}
         />
       )}
     />

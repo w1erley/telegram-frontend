@@ -5,13 +5,14 @@ type State = {
   chats: Record<number, ChatSummary>;
   messages: Record<number, Message[]>;
   scroll: Record<number, number>;
-  activeChatId: number | null;  // ← Move this to store
+  activeChatId: number | null;
   loading: boolean;
 };
 
 type Action =
   | { type: "SET_CHATS"; payload: ChatSummary[] }
   | { type: "UPSERT_CHAT"; payload: ChatSummary }
+  | { type: "REPLACE_CHAT"; oldId: number | null; newChat: ChatSummary }
   | { type: "ADD_MSG"; chatId: number; msg: Message }
   | { type: "DELETE_MSG"; chatId: number; msgId: number }
   | { type: "EDIT_MSG"; chatId: number; msg: Message }
@@ -38,11 +39,38 @@ const reducer = (state: State, action: Action): State => {
       };
 
     case "UPSERT_CHAT":
-      console.log("upsert chat", action.payload)
       return {
         ...state,
         chats: { ...state.chats, [action.payload.id!]: action.payload }
       };
+
+    case "REPLACE_CHAT": {
+      const { oldId, newChat } = action;
+
+      const newMessages = {
+        ...state.messages,
+        [newChat.id!]: state.messages[oldId!] ?? []
+      };
+      delete newMessages[oldId!];
+
+      const newScroll = {
+        ...state.scroll,
+        [newChat.id!]: state.scroll[oldId!] ?? 0
+      };
+      delete newScroll[oldId!];
+
+      const newChats = { ...state.chats };
+      delete newChats[oldId!];
+      newChats[newChat.id!] = newChat;
+
+      return {
+        ...state,
+        chats: newChats,
+        messages: newMessages,
+        scroll: newScroll,
+        activeChatId: newChat.id!
+      };
+    }
 
     case "ADD_MSG": {
       const list = [
@@ -78,13 +106,6 @@ const reducer = (state: State, action: Action): State => {
     case "MARK_READ": {
       const { chatId, message: payloadMsg, user } = action;
 
-      console.log(
-        "MARK_READ payload:",
-        "chatId =", chatId,
-        "msgId =", payloadMsg,
-        "user =", user
-      );
-
       const incomingStat: MessageStat | undefined = (payloadMsg.stats ?? []).find(
         (s) => s.user_id === user
       );
@@ -92,8 +113,6 @@ const reducer = (state: State, action: Action): State => {
       if (!incomingStat) {
         return state;
       }
-
-      console.log("gfkjondfgojhuidfoghujik");
 
       const updatedList = (state.messages[chatId] ?? []).map((m) => {
         if (m.id <= payloadMsg.id) {
@@ -147,7 +166,6 @@ const reducer = (state: State, action: Action): State => {
     }
 
     case "SET_SCROLL":
-      console.log("setting scroll", action.chatId, action.offset, "");
       return {
         ...state,
         scroll: { ...state.scroll, [action.chatId]: action.offset }
@@ -158,7 +176,7 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         messages: {
           ...state.messages,
-          [action.chatId]: action.list.slice(-MAX_BUFFER)   // лише останні
+          [action.chatId]: action.list.slice(-MAX_BUFFER)
         }
       };
     }
@@ -185,6 +203,7 @@ const reducer = (state: State, action: Action): State => {
     }
 
     case "SET_ACTIVE_CHAT":
+      console.log("SET_ACTIVE_CHAT", action.chatId);
       return {
         ...state,
         activeChatId: action.chatId
@@ -222,7 +241,10 @@ export const ChatStoreProvider = ({ children }: { children: React.ReactNode }) =
     loading: true
   });
 
-  const activeChat = state.activeChatId ? state.chats[state.activeChatId] || null : null;
+  const activeChat =
+    state.activeChatId && state.chats[state.activeChatId]
+      ? state.chats[state.activeChatId]
+      : Object.values(state.chats).find(chat => chat.id === null) || null;
 
   const navigateToChat = (aliasOrId: string) => {
     window.location.hash = aliasOrId;

@@ -30,8 +30,6 @@ export const useWebSocketConnection = () => {
     const handleMessageSent = (msg: Message & { chat_id: number }) => {
       dispatch({ type: "ADD_MSG", chatId: msg.chat_id, msg });
 
-      console.log("handle message sent", msg, state.activeChatId);
-
       if (
         msg.chat_id !== activeChatIdRef.current &&
         msg.sender_id !== user.id
